@@ -1,0 +1,20 @@
+{
+  "agent_usage": {
+    "goal": "Reduce token usage by loading only the JSON section needed for the current task.",
+    "files": {
+      "01-project-overview-and-scope.json": "Use for project purpose, scope, objectives, and target users.",
+      "02-user-roles-and-permissions.json": "Use for RBAC, user capabilities, and access limits.",
+      "03-system-features-and-modules.json": "Use for feature planning, module building, UI generation, and workflow creation.",
+      "04-database-and-implementation-notes.json": "Use for database design, migrations, models, indexes, and implementation phases."
+    },
+    "loading_strategy": {
+      "planning": ["project_overview", "roles_permissions"],
+      "feature_building": ["features_modules.selected_module_only"],
+      "database_design": ["database_implementation.tables", "database_implementation.implementation_notes"],
+      "ui_building": ["features_modules.selected_module_only", "roles_permissions.target_role_only"],
+      "security_review": ["roles_permissions", "database_implementation.tables.audit_logs", "database_implementation.implementation_notes"],
+      "report_generation": ["features_modules.reports", "features_modules.import_export", "database_implementation.tables.attendance"]
+    },
+    "prompt_rule": "Do not load all files unless the task needs full system context. Load only the matching keys or modules."
+  }
+}

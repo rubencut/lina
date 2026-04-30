@@ -1,0 +1,64 @@
+let serverPages = [];
+const pageLabels = {
+    dashboard: "Dashboard",
+    attendance: "Attendance",
+    users: "Users",
+    classrooms: "Classrooms",
+    reports: "Reports",
+    qr: "QR Scanner"
+};
+
+if (!token || isSessionExpired()) {
+    clearSession();
+    window.location.replace("index.html");
+}
+
+function allowedPages() {
+    return serverPages;
+}
+
+async function setupNavigation() {
+    const res = await fetch(`${API}/dashboard`, {
+        headers: authHeaders()
+    });
+    const dashboard = await readJson(res);
+    serverPages = dashboard.allowed_pages || [];
+
+    document.querySelector(".sidebar h2").innerText = `${displayStatus(dashboard.role)} Portal`;
+
+    const nav = document.querySelector(".nav");
+    nav.innerHTML = "";
+
+    serverPages.forEach(page => {
+        const menu = document.createElement("a");
+        menu.className = "menu";
+        menu.dataset.page = page;
+        menu.textContent = pageLabels[page] || displayStatus(page);
+        menu.addEventListener("click", () => showPage(page));
+        nav.appendChild(menu);
+    });
+
+    const savedPage = localStorage.getItem("activePage");
+    showPage(serverPages.includes(savedPage) ? savedPage : serverPages[0]);
+}
+
+function showPage(page) {
+    if (!allowedPages().includes(page)) {
+        page = allowedPages()[0] || "dashboard";
+    }
+
+    localStorage.setItem("activePage", page);
+
+    document.querySelectorAll(".menu").forEach(menu => {
+        menu.classList.toggle("active", menu.dataset.page === page);
+    });
+
+    document.querySelectorAll(".section").forEach(section => {
+        section.classList.toggle("active", section.id === page);
+    });
+
+    if (page === "dashboard") loadDashboard();
+    if (page === "attendance") loadAttendance();
+    if (page === "users") loadUsers();
+    if (page === "classrooms") loadClassrooms();
+}

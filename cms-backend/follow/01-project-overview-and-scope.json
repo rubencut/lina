@@ -1,0 +1,57 @@
+{
+  "project_overview": {
+    "id": "classroom_record_system",
+    "name": "Classroom Record System",
+    "type": "attendance_management_system",
+    "purpose": "A centralized platform for recording, monitoring, reporting, and managing attendance for classrooms, groups, offices, events, and training programs.",
+    "problem_statement": [
+      "Manual attendance tracking is time-consuming and error-prone.",
+      "Paper registers and spreadsheets can lead to incomplete records, delayed updates, inaccurate reports, and data loss.",
+      "A centralized system improves tracking, reporting, monitoring, and decision-making."
+    ],
+    "scope": [
+      "role_based_access_control",
+      "user_management",
+      "classroom_or_group_management",
+      "attendance_recording",
+      "qr_code_attendance",
+      "personal_attendance_history",
+      "email_sms_notifications",
+      "cron_automation",
+      "excel_import_export",
+      "pdf_export",
+      "printable_reports",
+      "profile_image_upload",
+      "audit_logs"
+    ],
+    "target_users": [
+      "schools",
+      "training_centers",
+      "offices",
+      "organizations",
+      "event_organizers",
+      "classroom_based_programs",
+      "attendance_monitoring_systems"
+    ],
+    "objectives": [
+      "Manage users based on assigned roles.",
+      "Assign users to classrooms or groups.",
+      "Record attendance by date, classroom, group, or user.",
+      "Support Present, Absent, Late, and Excused attendance statuses.",
+      "Allow correction of inaccurate attendance records.",
+      "Generate attendance reports.",
+      "Export reports in Excel and PDF.",
+      "Send email and SMS notifications.",
+      "Use QR codes for faster attendance marking.",
+      "Print attendance sheets for offline tracking."
+    ],
+    "recommended_names": [
+      "Classroom Record System",
+      "Classroom Attendance Record System",
+      "Smart Classroom Attendance System",
+      "QR-Based Classroom Attendance System",
+      "Classroom Monitoring and Attendance System"
+    ],
+    "final_name": "Classroom Record System"
+  }
+}

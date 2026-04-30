@@ -1,0 +1,71 @@
+{
+  "roles_permissions": {
+    "summary": "Role-based access control ensures each user can only access features assigned to their role.",
+    "roles": {
+      "super_admin": {
+        "description": "Full system control. Manages users, classrooms, settings, reports, and monitoring.",
+        "permissions": [
+          "create_users",
+          "read_users",
+          "update_users",
+          "delete_or_deactivate_users",
+          "assign_users_to_classrooms",
+          "manage_classrooms",
+          "view_all_attendance",
+          "generate_system_reports",
+          "configure_notifications",
+          "monitor_activity",
+          "manage_import_export_records",
+          "manage_system_settings"
+        ],
+        "crud": {
+          "users": {
+            "create": ["staff", "teachers", "supervisors", "students", "employees", "participants"],
+            "read": ["user_lists", "user_profiles", "classroom_assignments", "attendance_records", "reports", "notification_logs"],
+            "update": ["name", "email", "phone", "role", "profile_image", "classroom_assignment", "account_status"],
+            "delete": "Prefer account deactivation instead of permanent deletion to preserve attendance history."
+          }
+        }
+      },
+      "staff_teacher_supervisor": {
+        "description": "Manages attendance for assigned users, classrooms, or groups.",
+        "permissions": [
+          "mark_attendance",
+          "scan_qr_attendance",
+          "view_assigned_attendance",
+          "correct_attendance_records",
+          "add_attendance_remarks",
+          "generate_class_reports",
+          "print_attendance_sheets",
+          "submit_attendance",
+          "receive_submission_reminders"
+        ],
+        "crud": {
+          "attendance": {
+            "create": ["Present", "Absent", "Late", "Excused"],
+            "read": ["records_by_date", "records_by_user", "records_by_classroom", "records_by_group", "records_by_status"],
+            "update": ["status", "remarks", "time_in", "time_out", "correction_reason"],
+            "delete": "Remove erroneous records only when authorized. Prefer soft delete or audit logging."
+          }
+        },
+        "access_limits": ["assigned_classrooms_only", "assigned_groups_only"]
+      },
+      "student_employee_participant": {
+        "description": "Views personal attendance information only.",
+        "permissions": [
+          "view_personal_attendance_history",
+          "download_own_reports",
+          "receive_attendance_notifications"
+        ],
+        "allowed_exports": ["Excel", "PDF"],
+        "access_limits": ["own_records_only"]
+      }
+    },
+    "security_notes": [
+      "Use middleware, policies, or gates to enforce permissions.",
+      "Never rely only on frontend hiding for access control.",
+      "Use audit logs for attendance edits, deletions, imports, and exports.",
+      "Avoid permanent deletion when records are needed for audit history."
+    ]
+  }
+}

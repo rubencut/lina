@@ -1,0 +1,140 @@
+{
+  "features_modules": {
+    "user_management": {
+      "owner": "super_admin",
+      "functions": [
+        "add_users",
+        "view_users",
+        "edit_profiles",
+        "delete_or_deactivate_users",
+        "assign_roles",
+        "assign_classrooms",
+        "upload_profile_images",
+        "generate_qr_codes"
+      ],
+      "data": ["full_name", "role", "email", "phone", "profile_image", "qr_code", "classroom_id", "status"]
+    },
+    "classroom_management": {
+      "owner": "super_admin",
+      "functions": [
+        "create_classrooms",
+        "assign_teachers",
+        "assign_members",
+        "view_members",
+        "update_details",
+        "deactivate_classrooms"
+      ],
+      "data": ["name", "teacher_id", "description", "status", "created_at"]
+    },
+    "attendance_management": {
+      "owner": "staff_teacher_supervisor",
+      "statuses": {
+        "Present": "User attended on time.",
+        "Absent": "User did not attend.",
+        "Late": "User attended but arrived late.",
+        "Excused": "User was absent or late with a valid reason."
+      },
+      "functions": [
+        "manual_marking",
+        "qr_marking",
+        "view_records",
+        "filter_records",
+        "update_errors",
+        "delete_authorized_errors",
+        "add_remarks",
+        "generate_reports"
+      ],
+      "filters": ["date", "user", "classroom", "group", "status"],
+      "data": ["user_id", "classroom_id", "date", "time_in", "time_out", "status", "remarks", "recorded_by", "recorded_at"]
+    },
+    "qr_code_integration": {
+      "functions": [
+        "generate_unique_user_qr",
+        "display_qr_in_profile",
+        "scan_qr",
+        "auto_create_attendance",
+        "prevent_duplicate_same_day_or_session",
+        "support_classroom_tracking",
+        "support_event_tracking"
+      ],
+      "rules": [
+        "QR codes must be unique per user.",
+        "Scanning should validate classroom or session access.",
+        "Duplicate attendance for the same date or session must be blocked."
+      ]
+    },
+    "notifications": {
+      "channels": ["email", "sms"],
+      "email": [
+        "missing_or_incomplete_attendance_submission",
+        "attendance_record_update",
+        "leave_approval_or_correction"
+      ],
+      "sms": [
+        "absence_notice",
+        "late_arrival_notice",
+        "approved_leave_notice",
+        "daily_submission_reminder"
+      ],
+      "statuses": ["pending", "sent", "failed", "read"]
+    },
+    "automation_cron_jobs": {
+      "jobs": [
+        "daily_attendance_reminders",
+        "missing_submission_checks",
+        "scheduled_report_generation",
+        "bulk_import_processing",
+        "attendance_update_notifications"
+      ],
+      "notes": [
+        "Use queues for heavy notification sending.",
+        "Log job results for debugging.",
+        "Avoid silent failure by storing job status."
+      ]
+    },
+    "import_export": {
+      "import_formats": ["Excel"],
+      "import_targets": ["users", "attendance"],
+      "export_formats": ["Excel", "PDF"],
+      "export_targets": ["attendance_reports", "personal_attendance_history", "classroom_attendance_reports"],
+      "rules": [
+        "Validate file headers.",
+        "Validate required fields.",
+        "Reject invalid rows with clear error messages.",
+        "Store import logs."
+      ]
+    },
+    "print": {
+      "functions": [
+        "print_blank_attendance_sheets",
+        "print_daily_attendance",
+        "print_classroom_reports",
+        "print_individual_attendance_history"
+      ],
+      "use_cases": ["offline_tracking", "audits", "reporting"]
+    },
+    "image_upload": {
+      "functions": ["student_profile_image_upload", "profile_verification", "qr_identity_support"],
+      "rules": [
+        "Validate file type.",
+        "Limit file size.",
+        "Store path in user record.",
+        "Use default image when none is uploaded."
+      ]
+    },
+    "reports": {
+      "types": [
+        "daily_attendance",
+        "weekly_attendance",
+        "monthly_attendance",
+        "classroom_report",
+        "individual_report",
+        "absence_report",
+        "late_report",
+        "excused_report"
+      ],
+      "filters": ["date_range", "classroom", "user", "status", "role"],
+      "outputs": ["screen_view", "Excel", "PDF", "print"]
+    }
+  }
+}

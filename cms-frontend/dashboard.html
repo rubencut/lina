@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Classroom Record System | Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+
+<link rel="stylesheet" href="css/shared/base.css?v=1">
+<link rel="stylesheet" href="css/shared/components.css?v=1">
+<link rel="stylesheet" href="css/sections/attendance.css?v=1">
+</head>
+
+<body>
+
+<div class="sidebar">
+    <div>
+        <h2>Classroom Portal</h2>
+        <div class="nav"></div>
+    </div>
+
+    <button class="logout" onclick="logout()">Sign Out</button>
+</div>
+
+<div class="main">
+    <div id="dashboard" class="section active">
+        <h2>Dashboard</h2>
+        <div id="dashboardStats" class="dashboard-stats"></div>
+        <div class="dashboard-panel">
+            <div class="panel-header">
+                <h3>Recent Attendance</h3>
+            </div>
+            <table id="dashboardActivityTable"></table>
+        </div>
+    </div>
+
+    <div id="attendance" class="section">
+        <h2>Attendance Management</h2>
+        <div class="section-actions">
+            <button class="primary" onclick="addAttendance()">+ Record Attendance</button>
+            <button class="primary" onclick="loadAttendance()">Refresh Records</button>
+        </div>
+        <div class="table-controls">
+            <input id="attendanceSearchInput" placeholder="Search by user, classroom, date, or status">
+            <select id="attendanceSortSelect">
+                <option value="latest">Newest Records</option>
+                <option value="date">Date</option>
+                <option value="user">User</option>
+                <option value="status">Status</option>
+            </select>
+        </div>
+        <table id="attendanceTable"></table>
+    </div>
+
+    <div id="users" class="section">
+        <h2>User Management</h2>
+        <div class="section-actions">
+            <button class="primary" onclick="addUser()">+ Add User</button>
+            <button class="primary" onclick="loadUsers()">Refresh Users</button>
+        </div>
+        <table id="usersTable"></table>
+    </div>
+
+    <div id="classrooms" class="section">
+        <h2>Classroom Management</h2>
+        <div class="section-actions">
+            <button class="primary" onclick="addClassroom()">+ Add Classroom</button>
+            <button class="primary" onclick="loadClassrooms()">Refresh Classrooms</button>
+        </div>
+        <table id="classroomsTable"></table>
+    </div>
+
+    <div id="reports" class="section">
+        <h2>Reports</h2>
+        <div class="section-actions">
+            <button class="primary" onclick="dailyReport()">Daily Report</button>
+            <button class="primary" onclick="downloadCsv()">Export CSV</button>
+            <button class="primary" onclick="printDaily()">Print Daily</button>
+        </div>
+        <table id="reportsTable"></table>
+    </div>
+
+    <div id="qr" class="section">
+        <h2>QR Scanner</h2>
+        <div class="section-actions">
+            <button class="primary" onclick="startScanner()">Start Scanner</button>
+            <button class="primary" onclick="stopScanner()">Stop Scanner</button>
+        </div>
+        <video id="qrVideo" class="qr-video" playsinline></video>
+    </div>
+</div>
+
+<script src="js/shared/config.js?v=1"></script>
+<script src="js/shared/auth.js?v=1"></script>
+<script src="js/sections/users.js?v=1"></script>
+<script src="js/sections/classrooms.js?v=1"></script>
+<script src="js/sections/attendance.js?v=1"></script>
+<script src="js/sections/reports.js?v=1"></script>
+<script src="js/sections/qr.js?v=1"></script>
+<script src="js/app.js?v=1"></script>
+
+</body>
+</html>
