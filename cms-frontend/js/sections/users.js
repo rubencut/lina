@@ -23,7 +23,7 @@ async function loadUsers() {
             <td>${user.email}</td>
             <td>${user.phone ?? "-"}</td>
             <td>${displayStatus(user.role)}</td>
-            <td>${displayStatus(user.status)}</td>
+            <td>${statusBadge(user.status)}</td>
         </tr>`;
     });
 

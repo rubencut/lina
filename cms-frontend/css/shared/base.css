@@ -1,109 +1,226 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: Arial, Helvetica, sans-serif;
 }
 
 :root {
-    --bg: #f4f6f8;
+    --bg: #eef1f8;
+    --bg-grad-1: #f5f7fc;
+    --bg-grad-2: #e7ebf6;
     --surface: #ffffff;
-    --surface-muted: #f9fafb;
-    --border: #d9dee7;
-    --border-soft: #edf0f5;
-    --text: #111827;
-    --muted: #667085;
-    --primary: #1d4ed8;
-    --primary-hover: #1e40af;
-    --sidebar: #111827;
-    --danger: #dc2626;
+    --surface-muted: #f7f8fc;
+    --surface-hover: #f3f5fb;
+    --border: #e3e7f0;
+    --border-soft: #eef1f7;
+    --text: #1a1f36;
+    --text-soft: #3b4256;
+    --muted: #6b7280;
+    --muted-soft: #98a1b3;
+
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --primary-soft: #eef0fe;
+    --primary-grad: linear-gradient(135deg, #6366f1 0%, #4f46e5 55%, #4338ca 100%);
+
+    --sidebar: #14182b;
+    --danger: #e11d48;
+    --danger-hover: #be123c;
     --warning: #d97706;
-    --success: #15803d;
-    --page-gutter: 18rem;
+    --warning-hover: #b45309;
+    --success: #16a34a;
+    --success-soft: #e7f6ec;
+
+    --ring: 0 0 0 3px rgba(99, 102, 241, 0.28);
+    --shadow-sm: 0 1px 2px rgba(20, 24, 43, 0.06);
+    --shadow-md: 0 6px 18px rgba(20, 24, 43, 0.08);
+    --shadow-lg: 0 18px 50px rgba(20, 24, 43, 0.16);
+
+    --radius-sm: 8px;
+    --radius: 12px;
+    --radius-lg: 16px;
+
+    --page-gutter: 16rem;
+    --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+html {
+    font-size: 16px;
 }
 
 body {
     min-height: 100vh;
     height: 100vh;
-    background: var(--bg);
+    background:
+        radial-gradient(1200px 520px at 100% -10%, rgba(99, 102, 241, 0.12), transparent 60%),
+        radial-gradient(1000px 480px at -10% 110%, rgba(79, 70, 229, 0.10), transparent 55%),
+        linear-gradient(180deg, var(--bg-grad-1), var(--bg-grad-2));
     color: var(--text);
+    font-family: var(--font);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
     overflow: hidden;
 }
 
+/* ---------- Header ---------- */
 .app-header {
-    height: 68px;
-    background: var(--sidebar);
-    color: white;
+    height: 70px;
+    background: rgba(20, 24, 43, 0.92);
+    backdrop-filter: saturate(140%) blur(8px);
+    color: #fff;
     display: flex;
     align-items: center;
-    gap: 18px;
+    gap: 22px;
     padding: 0 var(--page-gutter);
     position: sticky;
     top: 0;
-    z-index: 10;
+    z-index: 20;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 6px 24px rgba(20, 24, 43, 0.18);
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 0 0 auto;
+}
+
+.brand-logo {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    background: var(--primary-grad);
+    color: #fff;
+    font-weight: 800;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.45);
 }
 
 .app-header h1 {
-    font-size: 17px;
+    font-size: 16px;
+    font-weight: 700;
     line-height: 1.2;
     margin: 0;
-    color: #f9fafb;
+    color: #f8fafc;
     white-space: nowrap;
+    letter-spacing: 0.2px;
 }
 
 .nav {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     flex: 1;
     overflow-x: auto;
     min-width: 0;
+    scrollbar-width: thin;
+}
+
+.nav::-webkit-scrollbar {
+    height: 0;
 }
 
 .nav a {
-    display: block;
-    padding: 10px 12px;
-    color: #e5e7eb;
+    display: flex;
+    align-items: center;
+    padding: 9px 15px;
+    color: #c2c8da;
     text-decoration: none;
-    border-radius: 6px;
+    border-radius: 9px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
 }
 
 .nav a:hover {
-    background: #1f2937;
-    color: white;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
 }
 
 .nav a.active {
-    background: var(--primary);
-    color: white;
+    background: var(--primary-grad);
+    color: #fff;
+    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4);
 }
 
+/* ---------- Main ---------- */
 .main {
-    height: calc(100vh - 68px);
-    padding: 24px var(--page-gutter);
+    height: calc(100vh - 70px);
+    padding: 30px var(--page-gutter);
     overflow-y: auto;
     min-width: 0;
+    scroll-behavior: smooth;
+}
+
+.main::-webkit-scrollbar {
+    width: 10px;
+}
+
+.main::-webkit-scrollbar-thumb {
+    background: #cbd2e2;
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background-clip: content-box;
 }
 
 .section {
     display: none;
+    animation: section-in 0.35s ease both;
 }
 
 .section.active {
     display: block;
 }
 
+@keyframes section-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .section h2 {
-    font-size: 22px;
-    font-weight: 700;
-    margin-bottom: 16px;
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.4px;
+    margin-bottom: 4px;
+    color: var(--text);
+}
+
+.section h2 + .section-actions,
+.section h2 + .table-controls {
+    margin-top: 18px;
+}
+
+.section > h2::after {
+    content: "";
+    display: block;
+    width: 46px;
+    height: 4px;
+    margin-top: 10px;
+    border-radius: 999px;
+    background: var(--primary-grad);
 }
 
 @media (max-width: 900px) {
     :root {
-        --page-gutter: 2rem;
+        --page-gutter: 1.25rem;
+    }
+
+    html {
+        font-size: 15px;
     }
 
     body {
@@ -115,7 +232,7 @@ body {
         height: auto;
         display: grid;
         gap: 12px;
-        padding: 14px var(--page-gutter);
+        padding: 16px var(--page-gutter);
     }
 
     .nav {
@@ -126,7 +243,7 @@ body {
 
     .main {
         height: auto;
-        padding: 16px;
+        padding: 20px var(--page-gutter);
         overflow: visible;
     }
 }

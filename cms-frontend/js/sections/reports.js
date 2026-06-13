@@ -68,7 +68,7 @@ async function viewReport(id) {
             <tr>
                 <td>${row.user?.name ?? "-"}</td>
                 <td>${row.user?.email ?? "-"}</td>
-                <td>${displayStatus(row.status)}</td>
+                <td>${statusBadge(row.status)}</td>
                 <td>${row.time_in ?? "-"}</td>
             </tr>`;
         });
