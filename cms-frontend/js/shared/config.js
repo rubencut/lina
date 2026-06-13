@@ -1,4 +1,4 @@
-const API = "http://127.0.0.1:9000/api";
+const API = "https://linayawa.yaxdedal.site/api";
 const SESSION_KEY = "sessionExpiresAt";
 const token = localStorage.getItem("token");
 

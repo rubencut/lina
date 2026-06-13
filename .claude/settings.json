@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls app/Http/Controllers)",
+      "Bash(ls app/Console/Commands)",
+      "Bash(grep -rl \"schedule\" routes/ app/Console)",
+      "Bash(ls app/Models)",
+      "Bash(php -l app/Http/Controllers/Api/ReportController.php)",
+      "Read(//c/Users/USER/herd/cms-frontend/**)",
+      "Bash(php artisan *)",
+      "Bash(cat config/cors.php)",
+      "Bash(grep -in \"APP_URL\\\\|FRONTEND\\\\|CORS\\\\|SANCTUM\\\\|ORIGIN\" .env .env.example)"
+    ]
+  }
+}
