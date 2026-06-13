@@ -29,7 +29,7 @@ function adminToken($case): string
     ])->json('token');
 }
 
-test('attendance reports export real excel and pdf files', function () {
+test('attendance reports export real excel, pdf, and csv files', function () {
     $token = adminToken($this);
     $student = User::create([
         'name' => 'Student',
@@ -56,7 +56,12 @@ test('attendance reports export real excel and pdf files', function () {
         ->assertOk()
         ->assertHeader('content-type', 'application/pdf');
 
-    expect(Export::count())->toBe(2);
+    $this->withToken($token)
+        ->get('/api/reports/export?report_type=daily&format=CSV&date=2026-05-01')
+        ->assertOk()
+        ->assertHeader('content-type', 'text/csv; charset=UTF-8');
+
+    expect(Export::count())->toBe(3);
 });
 
 test('excel imports can create users', function () {

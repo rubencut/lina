@@ -129,3 +129,8 @@ function downloadPdf() {
     const today = new Date().toISOString().slice(0, 10);
     downloadFile(`reports/export?report_type=reports&format=PDF&date_from=2000-01-01&date_to=${today}`, `classroom-reports-${today}.pdf`);
 }
+
+function downloadCsv() {
+    const today = new Date().toISOString().slice(0, 10);
+    downloadFile(`reports/export?report_type=reports&format=CSV&date_from=2000-01-01&date_to=${today}`, `classroom-reports-${today}.csv`);
+}

@@ -204,7 +204,7 @@ class ReportController extends Controller
     {
         $validated = $request->validate([
             'report_type' => 'required|in:reports,daily,weekly,monthly,classroom,individual',
-            'format' => 'required|in:Excel,PDF',
+            'format' => 'required|in:Excel,PDF,CSV',
             'date' => 'nullable|date',
             'date_from' => 'nullable|date',
             'date_to' => 'nullable|date',
@@ -226,14 +226,18 @@ class ReportController extends Controller
         $this->audit('report.exported', $export, null, $export->toArray());
 
         if ($validated['report_type'] === 'reports') {
-            return $validated['format'] === 'PDF'
-                ? $this->downloadReportsPdf($records, $validated)
-                : $this->downloadReportsExcel($records, $validated);
+            return match ($validated['format']) {
+                'PDF' => $this->downloadReportsPdf($records, $validated),
+                'CSV' => $this->downloadReportsCsv($records, $validated),
+                default => $this->downloadReportsExcel($records, $validated),
+            };
         }
 
-        return $validated['format'] === 'PDF'
-            ? $this->downloadPdf($records, $validated)
-            : $this->downloadExcel($records, $validated);
+        return match ($validated['format']) {
+            'PDF' => $this->downloadPdf($records, $validated),
+            'CSV' => $this->downloadCsv($records, $validated),
+            default => $this->downloadExcel($records, $validated),
+        };
     }
 
     private function exportReportSessions(array $filters)
@@ -344,6 +348,53 @@ class ReportController extends Controller
 
         return response()->streamDownload(fn () => $writer->save('php://output'), $this->exportName($filters, 'xlsx'), [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    private function downloadCsv($records, array $filters)
+    {
+        $headers = ['Date', 'User', 'Classroom', 'Status', 'Time In'];
+
+        $rows = $records->map(fn ($record) => [
+            optional($record->date)->toDateString(),
+            $record->user?->name,
+            $record->classroom?->name,
+            $record->status,
+            $record->time_in,
+        ]);
+
+        return $this->streamCsv($headers, $rows, $this->exportName($filters, 'csv'));
+    }
+
+    private function downloadReportsCsv($reports, array $filters)
+    {
+        $headers = ['Date', 'Classroom', 'Teacher', 'Description', 'Submitted', 'Students'];
+
+        $rows = $reports->map(fn ($report) => [
+            optional($report->date)->toDateString(),
+            $report->classroom?->name,
+            $report->classroom?->teacher?->name,
+            $report->classroom?->description,
+            optional($report->submitted_at)->format('Y-m-d H:i'),
+            $report->attendance_count,
+        ]);
+
+        return $this->streamCsv($headers, $rows, $this->exportName($filters, 'csv'));
+    }
+
+    private function streamCsv(array $headers, $rows, string $filename)
+    {
+        return response()->streamDownload(function () use ($headers, $rows) {
+            $handle = fopen('php://output', 'w');
+            // UTF-8 BOM so Excel renders accented names correctly.
+            fwrite($handle, "\xEF\xBB\xBF");
+            fputcsv($handle, $headers);
+            foreach ($rows as $row) {
+                fputcsv($handle, $row);
+            }
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }
 
