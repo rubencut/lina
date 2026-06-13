@@ -4,6 +4,7 @@ return [
     'paths' => ['api/*'],
     'allowed_methods' => ['*'],
     'allowed_origins' => [
+        'https://linayawa.yaxdedal.site',
         'http://localhost',
         'http://localhost:4177',
         'http://localhost:5173',
@@ -22,6 +23,7 @@ return [
         '#^https?://([a-z0-9-]+\.)?test(:[0-9]+)?$#i',
         '#^https?://localhost(:[0-9]+)?$#i',
         '#^https?://127\.0\.0\.1(:[0-9]+)?$#',
+        '#^https?://([a-z0-9-]+\.)?yaxdedal\.site(:[0-9]+)?$#i',
     ],
     'allowed_headers' => ['*'],
     'exposed_headers' => [],
