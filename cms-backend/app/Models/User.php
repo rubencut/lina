@@ -2,138 +2,120 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'password', 'phone', 'profile_image', 'qr_code', 'classroom_id', 'role', 'status'])]
-#[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'created_at' => 'datetime',
-            'updated_at' => 'datetime',
-        ];
-    }
+    private const VERIFICATION_ROLES = [
+        'staff_teacher_supervisor',
+        'student_employee_participant',
+    ];
 
-    /**
-     * Get the classroom this user is assigned to.
-     */
+    protected $fillable = [
+        'name',
+        'email',
+        'email_verification_code',
+        'email_verification_expires_at',
+        'password',
+        'phone',
+        'profile_image',
+        'qr_code',
+        'classroom_id',
+        'role',
+        'status',
+    ];
+
+    protected $hidden = [
+        'password',
+        'remember_token',
+        'email_verification_code',
+    ];
+
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'email_verification_expires_at' => 'datetime',
+        'password' => 'hashed',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
     public function classroom()
     {
         return $this->belongsTo(Classroom::class);
     }
 
-    /**
-     * Get classrooms where this user is a teacher.
-     */
     public function teacherClassrooms()
     {
         return $this->hasMany(Classroom::class, 'teacher_id');
     }
 
-    /**
-     * Get attendance records for this user.
-     */
     public function attendance()
     {
         return $this->hasMany(Attendance::class);
     }
 
-    /**
-     * Get attendance records recorded by this user.
-     */
-    public function recordedAttendance()
-    {
-        return $this->hasMany(Attendance::class, 'recorded_by');
-    }
-
-    /**
-     * Get notifications for this user.
-     */
-    public function notifications()
-    {
-        return $this->hasMany(Notification::class);
-    }
-
-    /**
-     * Get imports by this user.
-     */
-    public function imports()
-    {
-        return $this->hasMany(Import::class, 'uploaded_by');
-    }
-
-    /**
-     * Get exports by this user.
-     */
-    public function exports()
-    {
-        return $this->hasMany(Export::class, 'exported_by');
-    }
-
-    /**
-     * Get audit logs for this user.
-     */
-    public function auditLogs()
-    {
-        return $this->hasMany(AuditLog::class);
-    }
-
-    /**
-     * Get attendance sessions created by this user.
-     */
-    public function createdSessions()
-    {
-        return $this->hasMany(AttendanceSession::class, 'created_by');
-    }
-
-    /**
-     * Check if user has a specific role.
-     */
-    public function hasRole($role)
-    {
-        return $this->role === $role;
-    }
-
-    /**
-     * Check if user is super admin.
-     */
     public function isSuperAdmin()
     {
         return $this->role === 'super_admin';
     }
 
-    /**
-     * Check if user is staff/teacher/supervisor.
-     */
     public function isStaffTeacherSupervisor()
     {
         return $this->role === 'staff_teacher_supervisor';
     }
 
-    /**
-     * Check if user is student/employee/participant.
-     */
     public function isStudentEmployeeParticipant()
     {
         return $this->role === 'student_employee_participant';
+    }
+
+    public function needsEmailVerification(): bool
+    {
+        return in_array($this->role, self::VERIFICATION_ROLES, true);
+    }
+
+    public function hasPendingEmailVerification(): bool
+    {
+        return $this->needsEmailVerification()
+            && ! $this->email_verified_at
+            && (bool) $this->email_verification_code;
+    }
+
+    public function startEmailVerification(): ?string
+    {
+        if (! $this->needsEmailVerification()) {
+            return null;
+        }
+
+        $code = (string) random_int(100000, 999999);
+
+        $this->forceFill([
+            'email_verified_at' => null,
+            'email_verification_code' => Hash::make($code),
+            'email_verification_expires_at' => now()->addMinutes(30),
+        ])->save();
+
+        return $code;
+    }
+
+    public function verificationCodeMatches(string $code): bool
+    {
+        return $this->email_verification_code
+            && Hash::check($code, $this->email_verification_code);
+    }
+
+    public function completeEmailVerification(): void
+    {
+        $this->forceFill([
+            'email_verified_at' => now(),
+            'email_verification_code' => null,
+            'email_verification_expires_at' => null,
+        ])->save();
     }
 }

@@ -3,17 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\Attendance;
-use App\Models\Classroom;
 use App\Models\User;
 use Illuminate\Http\Request;
 
 class AttendanceController extends Controller
 {
-    /**
-     * Display a listing of attendance records.
-     */
+    private const STATUSES = ['Present', 'Absent', 'Late', 'Excused'];
     public function index(Request $request)
     {
         $query = Attendance::query();
@@ -55,27 +51,28 @@ class AttendanceController extends Controller
         return response()->json($records);
     }
 
-    /**
-     * Store a new attendance record.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
             'user_id' => 'required|integer|exists:users,id',
             'classroom_id' => 'nullable|integer|exists:classrooms,id',
+            'attendance_session_id' => 'nullable|integer|exists:attendance_sessions,id',
             'date' => 'required|date',
             'time_in' => 'nullable|date_format:H:i',
-            'time_out' => 'nullable|date_format:H:i',
-            'status' => 'required|in:Present,Absent,Late,Excused',
-            'remarks' => 'nullable|string',
+            'status' => ['required', 'string', 'in:' . implode(',', self::STATUSES)],
         ]);
 
-        // Check for duplicate attendance (same user, classroom, date)
         $existing = Attendance::where('user_id', $validated['user_id'])
             ->where('date', $validated['date']);
 
-        if ($validated['classroom_id']) {
+        if ($validated['classroom_id'] ?? null) {
             $existing->where('classroom_id', $validated['classroom_id']);
+        }
+
+        if ($validated['attendance_session_id'] ?? null) {
+            $existing->where('attendance_session_id', $validated['attendance_session_id']);
+        } else {
+            $existing->whereNull('attendance_session_id');
         }
 
         if ($existing->exists()) {
@@ -85,13 +82,86 @@ class AttendanceController extends Controller
         $validated['recorded_by'] = auth()->id();
 
         $record = Attendance::create($validated);
+        $this->audit('attendance.created', $record, null, $record->toArray());
 
         return response()->json($record->load(['user', 'classroom', 'recorder']), 201);
     }
 
-    /**
-     * Display a specific attendance record.
-     */
+    public function markByQr(Request $request)
+    {
+        $validated = $request->validate([
+            'qr_code' => 'required|string',
+            'date' => 'nullable|date',
+            'time_in' => 'nullable|date_format:H:i',
+        ]);
+
+        $teacher = $request->user();
+        $student = User::with('classroom')
+            ->where('qr_code', trim($validated['qr_code']))
+            ->where('status', 'active')
+            ->first();
+
+        if (!$student) {
+            return response()->json(['message' => 'QR code was not found.'], 404);
+        }
+
+        if (!$student->isStudentEmployeeParticipant()) {
+            return response()->json(['message' => 'This QR code does not belong to a student.'], 422);
+        }
+
+        if (
+            !$student->classroom
+            || $student->classroom->status !== 'active'
+            || (int) $student->classroom->teacher_id !== (int) $teacher->id
+        ) {
+            return response()->json(['message' => 'This student is not assigned to your active classroom.'], 403);
+        }
+
+        $date = $validated['date'] ?? now()->toDateString();
+        $timeIn = $validated['time_in'] ?? now()->format('H:i');
+
+        $record = Attendance::where('user_id', $student->id)
+            ->where('classroom_id', $student->classroom_id)
+            ->whereDate('date', $date)
+            ->whereNull('attendance_session_id')
+            ->first();
+
+        if ($record) {
+            if ($record->status !== 'Present' || !$record->time_in) {
+                $old = $record->only(['status', 'time_in', 'recorded_by']);
+                $record->update([
+                    'status' => 'Present',
+                    'time_in' => $timeIn,
+                    'recorded_by' => $teacher->id,
+                ]);
+                $this->audit('attendance.updated_by_qr', $record, $old, $record->fresh()->toArray());
+            }
+
+            return response()->json([
+                'message' => "{$student->name} is already marked present for {$date}.",
+                'already_recorded' => true,
+                'attendance' => $record->fresh(['user', 'classroom', 'recorder']),
+            ]);
+        }
+
+        $record = Attendance::create([
+            'user_id' => $student->id,
+            'classroom_id' => $student->classroom_id,
+            'date' => $date,
+            'time_in' => $timeIn,
+            'status' => 'Present',
+            'recorded_by' => $teacher->id,
+        ]);
+
+        $this->audit('attendance.created_by_qr', $record, null, $record->toArray());
+
+        return response()->json([
+            'message' => "{$student->name} marked present.",
+            'already_recorded' => false,
+            'attendance' => $record->load(['user', 'classroom', 'recorder']),
+        ], 201);
+    }
+
     public function show(Attendance $record)
     {
         $this->ensureCanAccessAttendance($record);
@@ -99,78 +169,33 @@ class AttendanceController extends Controller
         return response()->json($record->load(['user', 'classroom', 'recorder']));
     }
 
-    /**
-     * Update an attendance record.
-     */
     public function update(Request $request, Attendance $record)
     {
         $this->ensureCanAccessAttendance($record, true);
+        $old = $record->only(['status', 'time_in']);
 
         $validated = $request->validate([
             'status' => 'sometimes|in:Present,Absent,Late,Excused',
-            'remarks' => 'nullable|string',
             'time_in' => 'nullable|date_format:H:i',
-            'time_out' => 'nullable|date_format:H:i',
         ]);
 
         $record->update($validated);
+        $this->audit('attendance.updated', $record, $old, $record->fresh()->toArray());
 
         return response()->json($record);
     }
 
-    /**
-     * Delete an attendance record.
-     */
     public function destroy(Attendance $record)
     {
         $this->ensureCanAccessAttendance($record, true);
+        $old = $record->toArray();
 
         $record->delete();
+        $this->audit('attendance.deleted', $record, $old);
 
         return response()->json(['message' => 'Attendance record deleted successfully']);
     }
 
-    /**
-     * Mark attendance with QR code.
-     */
-    public function markByQrCode(Request $request)
-    {
-        $validated = $request->validate([
-            'qr_code' => 'required|string',
-            'classroom_id' => 'required|integer|exists:classrooms,id',
-        ]);
-
-        $user = User::where('qr_code', $validated['qr_code'])->first();
-
-        if (!$user) {
-            return response()->json(['message' => 'Invalid QR code'], 404);
-        }
-
-        // Check for duplicate
-        $existing = Attendance::where('user_id', $user->id)
-            ->where('classroom_id', $validated['classroom_id'])
-            ->whereDate('date', now())
-            ->first();
-
-        if ($existing) {
-            return response()->json(['message' => 'Attendance already marked for this session'], 409);
-        }
-
-        $record = Attendance::create([
-            'user_id' => $user->id,
-            'classroom_id' => $validated['classroom_id'],
-            'date' => now()->toDateString(),
-            'time_in' => now()->toTimeString(),
-            'status' => 'Present',
-            'recorded_by' => auth()->id(),
-        ]);
-
-        return response()->json($record->load(['user', 'classroom']), 201);
-    }
-
-    /**
-     * Get personal attendance history.
-     */
     public function getPersonalHistory(Request $request)
     {
         $user = auth()->user();
@@ -190,9 +215,6 @@ class AttendanceController extends Controller
         return response()->json($records);
     }
 
-    /**
-     * Get attendance summary.
-     */
     public function getSummary(Request $request)
     {
         $validated = $request->validate([
@@ -208,10 +230,10 @@ class AttendanceController extends Controller
         }
 
         $summary = [
-            'present' => (clone $query)->where('status', 'Present')->count(),
-            'absent' => (clone $query)->where('status', 'Absent')->count(),
-            'late' => (clone $query)->where('status', 'Late')->count(),
-            'excused' => (clone $query)->where('status', 'Excused')->count(),
+            'present' => (clone $query)->where('status', self::STATUSES[0])->count(),
+            'absent' => (clone $query)->where('status', self::STATUSES[1])->count(),
+            'late' => (clone $query)->where('status', self::STATUSES[2])->count(),
+            'excused' => (clone $query)->where('status', self::STATUSES[3])->count(),
         ];
 
         return response()->json($summary);

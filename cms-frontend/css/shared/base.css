@@ -19,40 +19,45 @@
     --danger: #dc2626;
     --warning: #d97706;
     --success: #15803d;
+    --page-gutter: 18rem;
 }
 
 body {
-    display: flex;
+    min-height: 100vh;
     height: 100vh;
     background: var(--bg);
     color: var(--text);
     overflow: hidden;
 }
 
-.sidebar {
-    width: 248px;
-    min-width: 248px;
-    height: 100vh;
+.app-header {
+    height: 68px;
     background: var(--sidebar);
     color: white;
     display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 18px;
+    align-items: center;
+    gap: 18px;
+    padding: 0 var(--page-gutter);
     position: sticky;
     top: 0;
+    z-index: 10;
 }
 
-.sidebar h2 {
-    font-size: 15px;
-    line-height: 1.35;
-    margin: 4px 0 22px;
+.app-header h1 {
+    font-size: 17px;
+    line-height: 1.2;
+    margin: 0;
     color: #f9fafb;
+    white-space: nowrap;
 }
 
 .nav {
-    display: grid;
+    display: flex;
+    align-items: center;
     gap: 6px;
+    flex: 1;
+    overflow-x: auto;
+    min-width: 0;
 }
 
 .nav a {
@@ -76,8 +81,8 @@ body {
 }
 
 .main {
-    flex: 1;
-    padding: 24px;
+    height: calc(100vh - 68px);
+    padding: 24px var(--page-gutter);
     overflow-y: auto;
     min-width: 0;
 }
@@ -97,19 +102,30 @@ body {
 }
 
 @media (max-width: 900px) {
+    :root {
+        --page-gutter: 2rem;
+    }
+
     body {
-        display: block;
         overflow: auto;
     }
 
-    .sidebar {
+    .app-header {
         position: static;
-        width: 100%;
-        min-width: 0;
         height: auto;
+        display: grid;
+        gap: 12px;
+        padding: 14px var(--page-gutter);
+    }
+
+    .nav {
+        display: flex;
+        flex-wrap: wrap;
+        overflow: visible;
     }
 
     .main {
+        height: auto;
         padding: 16px;
         overflow: visible;
     }

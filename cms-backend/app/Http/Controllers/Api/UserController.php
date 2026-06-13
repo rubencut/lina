@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -11,9 +10,6 @@ use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
-    /**
-     * Display a listing of users.
-     */
     public function index(Request $request)
     {
         $query = User::query();
@@ -39,13 +35,17 @@ class UserController extends Controller
         }
 
         $users = $query->paginate($request->per_page ?? 15);
+        $users->getCollection()->transform(function (User $user) {
+            if ($user->qr_code) {
+                $user->qr_image = QrCodeController::dataUrlFor($user);
+            }
+
+            return $user;
+        });
 
         return response()->json($users);
     }
 
-    /**
-     * Store a newly created user.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -59,28 +59,32 @@ class UserController extends Controller
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
+        $validated['qr_code'] = Str::uuid()->toString();
 
         $user = User::create($validated);
+        $this->audit('user.created', $user, null, $user->toArray());
+        $this->audit('user.qr_generated', $user, null, ['qr_code' => $user->qr_code]);
 
-        return response()->json($user, 201);
+        $notificationSent = $this->sendVerificationNotification($user);
+        $responseUser = $user->fresh();
+        $responseUser->verification_required = $responseUser->hasPendingEmailVerification();
+        $responseUser->notification_sent = $notificationSent;
+
+        return response()->json($responseUser, 201);
     }
 
-    /**
-     * Display a specific user.
-     */
     public function show(User $user)
     {
         return response()->json($user->load(['classroom', 'teacherClassrooms']));
     }
 
-    /**
-     * Update a user.
-     */
     public function update(Request $request, User $user)
     {
+        $old = $user->only(['name', 'email', 'phone', 'role', 'classroom_id', 'status']);
+
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|email|unique:users,email,' . $user->id,
+            'email' => 'sometimes|email|unique:users,email,'.$user->id,
             'phone' => 'nullable|string|max:20',
             'role' => 'sometimes|in:super_admin,staff_teacher_supervisor,student_employee_participant',
             'classroom_id' => 'nullable|integer|exists:classrooms,id',
@@ -88,23 +92,20 @@ class UserController extends Controller
         ]);
 
         $user->update($validated);
+        $this->audit('user.updated', $user, $old, $user->fresh()->toArray());
 
         return response()->json($user);
     }
 
-    /**
-     * Delete a user (deactivate instead of delete).
-     */
     public function destroy(User $user)
     {
+        $old = $user->only(['status']);
         $user->update(['status' => 'inactive']);
+        $this->audit('user.deactivated', $user, $old, ['status' => 'inactive']);
 
         return response()->json(['message' => 'User deactivated successfully']);
     }
 
-    /**
-     * Update user profile picture.
-     */
     public function uploadProfileImage(Request $request, User $user)
     {
         $validated = $request->validate([
@@ -113,24 +114,23 @@ class UserController extends Controller
 
         if ($request->hasFile('profile_image')) {
             $path = $request->file('profile_image')->store('profile_images', 'public');
+            $old = $user->only(['profile_image']);
             $user->update(['profile_image' => $path]);
+            $this->audit('user.profile_image_updated', $user, $old, ['profile_image' => $path]);
         }
 
         return response()->json($user);
     }
 
-    /**
-     * Generate QR code for user.
-     */
-    public function generateQrCode(User $user)
+    private function sendVerificationNotification(User $user): bool
     {
-        if (!$user->qr_code) {
-            $user->update(['qr_code' => Str::uuid()->toString()]);
+        $code = $user->startEmailVerification();
+
+        if (! $code) {
+            return false;
         }
 
-        return response()->json([
-            'qr_code' => $user->qr_code,
-            'user_id' => $user->id,
-        ]);
+        return app(NotificationController::class)->sendVerificationCode($user->fresh(), $code);
     }
+
 }

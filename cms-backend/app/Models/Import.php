@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Import extends Model
 {
@@ -26,19 +26,8 @@ class Import extends Model
         'updated_at' => 'datetime',
     ];
 
-    /**
-     * Get the user who uploaded this import.
-     */
     public function uploadedBy()
     {
         return $this->belongsTo(User::class, 'uploaded_by');
-    }
-
-    /**
-     * Scope to get imports by status.
-     */
-    public function scopeByStatus($query, $status)
-    {
-        return $query->where('status', $status);
     }
 }

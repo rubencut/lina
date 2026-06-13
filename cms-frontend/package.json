@@ -1,0 +1,9 @@
+{
+  "name": "cms-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "npx http-server . -p 8000",
+    "serve": "npx http-server . -p 8000"
+  }
+}

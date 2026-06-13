@@ -3,19 +3,18 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\Attendance;
+use App\Models\Classroom;
 use App\Models\Import;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class ImportController extends Controller
 {
-    /**
-     * List all imports.
-     */
     public function index(Request $request)
     {
         $imports = Import::where('uploaded_by', auth()->id())
@@ -31,21 +30,20 @@ class ImportController extends Controller
         return response()->json($imports);
     }
 
-    /**
-     * Upload and process import file.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'file' => 'required|file|mimes:csv,txt|max:5120',
+            'file' => 'required|file|mimes:csv,txt,xlsx,xls|max:5120',
             'type' => 'required|in:users,attendance',
         ]);
 
+        if ($validated['type'] === 'users' && ! $request->user()->isSuperAdmin()) {
+            return response()->json(['message' => 'Only admins can import users.'], 403);
+        }
+
         try {
-            // Store the file
             $filePath = $request->file('file')->store('imports', 'local');
 
-            // Create import record
             $import = Import::create([
                 'uploaded_by' => auth()->id(),
                 'file_name' => $request->file('file')->getClientOriginalName(),
@@ -54,7 +52,8 @@ class ImportController extends Controller
                 'total_rows' => 0,
             ]);
 
-            $this->processImport($import, storage_path('app/' . $filePath));
+            $this->processImport($import, Storage::disk('local')->path($filePath));
+            $this->audit('import.processed', $import, null, $import->fresh()->toArray());
 
             return response()->json([
                 'message' => 'File uploaded and processed successfully.',
@@ -65,17 +64,11 @@ class ImportController extends Controller
         }
     }
 
-    /**
-     * Get import details.
-     */
     public function show(Import $import)
     {
         return response()->json($import->load('uploadedBy'));
     }
 
-    /**
-     * Download import template.
-     */
     public function downloadTemplate($type = 'attendance')
     {
         $type = in_array($type, ['users', 'attendance']) ? $type : 'attendance';
@@ -83,10 +76,10 @@ class ImportController extends Controller
         if ($type === 'users') {
             $headers = ['Name', 'Email', 'Password', 'Role', 'Phone', 'Status'];
         } else {
-            $headers = ['User Email', 'Date', 'Status', 'Time In', 'Time Out', 'Remarks', 'Classroom ID'];
+            $headers = ['User Email', 'Date', 'Status', 'Time In', 'Classroom ID'];
         }
 
-        $csv = implode(',', $headers) . "\n";
+        $csv = implode(',', $headers)."\n";
 
         return response()->streamDownload(function () use ($csv) {
             echo $csv;
@@ -98,21 +91,19 @@ class ImportController extends Controller
         try {
             $import->update(['status' => 'processing']);
 
-            $lines = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            $header = array_map('strtolower', str_getcsv(array_shift($lines) ?: ''));
+            $rows = $this->readRows($filePath);
+            $header = array_map([$this, 'key'], array_shift($rows) ?: []);
             $successCount = 0;
             $failCount = 0;
             $errors = [];
 
             DB::beginTransaction();
 
-            foreach ($lines as $lineNum => $line) {
-                $row = str_getcsv($line);
-
+            foreach ($rows as $lineNum => $row) {
                 try {
                     $data = array_combine($header, $row);
 
-                    if (!$data) {
+                    if (! $data) {
                         throw new \RuntimeException('Invalid row structure.');
                     }
 
@@ -123,7 +114,7 @@ class ImportController extends Controller
                     $successCount++;
                 } catch (\Throwable $e) {
                     $failCount++;
-                    $errors[] = 'Line ' . ($lineNum + 2) . ': ' . $e->getMessage();
+                    $errors[] = 'Line '.($lineNum + 2).': '.$e->getMessage();
                 }
             }
 
@@ -131,7 +122,7 @@ class ImportController extends Controller
 
             $import->update([
                 'status' => 'completed',
-                'total_rows' => count($lines),
+                'total_rows' => count($rows),
                 'successful_rows' => $successCount,
                 'failed_rows' => $failCount,
                 'error_log' => $errors,
@@ -160,7 +151,7 @@ class ImportController extends Controller
             throw new \RuntimeException("User with email {$data['email']} already exists");
         }
 
-        User::create([
+        $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password'] ?? 'default123'),
@@ -168,11 +159,13 @@ class ImportController extends Controller
             'phone' => $data['phone'] ?? null,
             'status' => $data['status'] ?? 'active',
         ]);
+
+        DB::afterCommit(fn () => $this->sendVerificationNotification($user));
     }
 
     private function importAttendance(array $data): void
     {
-        foreach (['user_email', 'date', 'status'] as $field) {
+        foreach (['user_email', 'date', 'status', 'classroom_id'] as $field) {
             if (empty($data[$field])) {
                 throw new \RuntimeException("Missing required field: {$field}");
             }
@@ -180,12 +173,30 @@ class ImportController extends Controller
 
         $user = User::where('email', $data['user_email'])->first();
 
-        if (!$user) {
+        if (! $user) {
             throw new \RuntimeException("User not found: {$data['user_email']}");
+        }
+
+        $classroom = Classroom::find($data['classroom_id']);
+
+        if (! $classroom) {
+            throw new \RuntimeException("Classroom not found: {$data['classroom_id']}");
+        }
+
+        $viewer = auth()->user();
+
+        if ($viewer->isStaffTeacherSupervisor()) {
+            $allowed = (int) $classroom->teacher_id === (int) $viewer->id
+                && (int) $user->classroom_id === (int) $classroom->id;
+
+            if (! $allowed) {
+                throw new \RuntimeException("You cannot import attendance for {$data['user_email']}");
+            }
         }
 
         $existing = Attendance::where('user_id', $user->id)
             ->whereDate('date', $data['date'])
+            ->where('classroom_id', $data['classroom_id'])
             ->first();
 
         if ($existing) {
@@ -194,13 +205,36 @@ class ImportController extends Controller
 
         Attendance::create([
             'user_id' => $user->id,
-            'classroom_id' => $data['classroom_id'] ?? null,
+            'classroom_id' => $classroom->id,
             'date' => $data['date'],
             'time_in' => $data['time_in'] ?? null,
-            'time_out' => $data['time_out'] ?? null,
             'status' => $data['status'],
-            'remarks' => $data['remarks'] ?? null,
             'recorded_by' => auth()->id(),
         ]);
+    }
+
+    private function readRows(string $filePath): array
+    {
+        if (in_array(strtolower(pathinfo($filePath, PATHINFO_EXTENSION)), ['xlsx', 'xls'], true)) {
+            return IOFactory::load($filePath)->getActiveSheet()->toArray(null, true, true, false);
+        }
+
+        return array_map('str_getcsv', file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES));
+    }
+
+    private function key(mixed $value): string
+    {
+        return str_replace(' ', '_', strtolower(trim((string) $value)));
+    }
+
+    private function sendVerificationNotification(User $user): bool
+    {
+        $code = $user->startEmailVerification();
+
+        if (! $code) {
+            return false;
+        }
+
+        return app(NotificationController::class)->sendVerificationCode($user->fresh(), $code);
     }
 }

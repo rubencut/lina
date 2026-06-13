@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "CMS Mobile",
+    "slug": "cms-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "cmsmobile",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Camera access is used by teachers to scan student QR codes for attendance."
+      }
+    },
+    "android": {
+      "permissions": ["CAMERA"]
+    }
+  }
+}

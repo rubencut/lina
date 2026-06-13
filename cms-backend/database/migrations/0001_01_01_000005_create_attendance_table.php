@@ -17,9 +17,7 @@ return new class extends Migration
             $table->foreignId('classroom_id')->nullable()->constrained('classrooms')->nullOnDelete();
             $table->date('date');
             $table->time('time_in')->nullable();
-            $table->time('time_out')->nullable();
             $table->enum('status', ['Present', 'Absent', 'Late', 'Excused'])->default('Present');
-            $table->text('remarks')->nullable();
             $table->foreignId('recorded_by')->constrained('users')->restrictOnDelete();
             $table->timestamps();
             $table->softDeletes();

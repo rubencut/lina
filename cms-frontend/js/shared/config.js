@@ -1,4 +1,4 @@
-const API = "http://127.0.0.1:8000/api";
+const API = "http://127.0.0.1:9000/api";
 const SESSION_KEY = "sessionExpiresAt";
 const token = localStorage.getItem("token");
 
@@ -88,4 +88,54 @@ function downloadFile(path, filename = "export.csv") {
         .catch(err => {
             Swal.fire("Download Failed", apiError(err, "The file could not be downloaded."), "error");
         });
+}
+
+async function postJson(path, payload, headers = {}) {
+    const res = await fetch(`${API}${path}`, {
+        method: "POST",
+        cache: "no-store",
+        headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Cache-Control": "no-store",
+            ...headers
+        },
+        body: JSON.stringify(payload)
+    });
+
+    return readJson(res);
+}
+
+async function promptVerificationCode(emailAddress) {
+    const { value: verified } = await Swal.fire({
+        title: "Verification Code",
+        text: `Enter the code sent to ${emailAddress}.`,
+        input: "text",
+        inputAttributes: {
+            maxlength: 6,
+            inputmode: "numeric"
+        },
+        showCancelButton: true,
+        confirmButtonText: "Verify",
+        preConfirm: async (code) => {
+            const value = String(code || "").trim();
+
+            if (!/^\d{6}$/.test(value)) {
+                return showFormError("Enter the 6-digit verification code");
+            }
+
+            try {
+                await postJson("/verify-code", {
+                    email: emailAddress,
+                    code: value
+                });
+
+                return true;
+            } catch (err) {
+                return showFormError(apiError(err, "The verification code could not be verified."));
+            }
+        }
+    });
+
+    return Boolean(verified);
 }

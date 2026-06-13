@@ -9,23 +9,18 @@
 <title>Classroom Record System | Dashboard</title>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-
-<link rel="stylesheet" href="css/shared/base.css?v=1">
-<link rel="stylesheet" href="css/shared/components.css?v=1">
-<link rel="stylesheet" href="css/sections/attendance.css?v=1">
+<link rel="stylesheet" href="css/shared/base.css?v=4">
+<link rel="stylesheet" href="css/shared/components.css?v=4">
 </head>
 
 <body>
 
-<div class="sidebar">
-    <div>
-        <h2>Classroom Portal</h2>
-        <div class="nav"></div>
-    </div>
+<header class="app-header">
+    <h1>Classroom Portal</h1>
+    <nav class="nav"></nav>
 
     <button class="logout" onclick="logout()">Sign Out</button>
-</div>
+</header>
 
 <div class="main">
     <div id="dashboard" class="section active">
@@ -33,28 +28,16 @@
         <div id="dashboardStats" class="dashboard-stats"></div>
         <div class="dashboard-panel">
             <div class="panel-header">
+                <h3>Student QR Codes</h3>
+            </div>
+            <div id="dashboardQrGrid" class="dashboard-qr-grid"></div>
+        </div>
+        <div class="dashboard-panel">
+            <div class="panel-header">
                 <h3>Recent Attendance</h3>
             </div>
             <table id="dashboardActivityTable"></table>
         </div>
-    </div>
-
-    <div id="attendance" class="section">
-        <h2>Attendance Management</h2>
-        <div class="section-actions">
-            <button class="primary" onclick="addAttendance()">+ Record Attendance</button>
-            <button class="primary" onclick="loadAttendance()">Refresh Records</button>
-        </div>
-        <div class="table-controls">
-            <input id="attendanceSearchInput" placeholder="Search by user, classroom, date, or status">
-            <select id="attendanceSortSelect">
-                <option value="latest">Newest Records</option>
-                <option value="date">Date</option>
-                <option value="user">User</option>
-                <option value="status">Status</option>
-            </select>
-        </div>
-        <table id="attendanceTable"></table>
     </div>
 
     <div id="users" class="section">
@@ -69,40 +52,36 @@
     <div id="classrooms" class="section">
         <h2>Classroom Management</h2>
         <div class="section-actions">
-            <button class="primary" onclick="addClassroom()">+ Add Classroom</button>
-            <button class="primary" onclick="loadClassrooms()">Refresh Classrooms</button>
+            <button id="addClassroomButton" class="primary" onclick="addClassroom()">+ Add Classroom</button>
         </div>
         <table id="classroomsTable"></table>
     </div>
 
     <div id="reports" class="section">
         <h2>Reports</h2>
-        <div class="section-actions">
-            <button class="primary" onclick="dailyReport()">Daily Report</button>
-            <button class="primary" onclick="downloadCsv()">Export CSV</button>
-            <button class="primary" onclick="printDaily()">Print Daily</button>
+        <div id="reportActions" class="section-actions">
+            <button class="primary" onclick="downloadExcel()">Export Excel</button>
+            <button class="primary" onclick="downloadPdf()">Export PDF</button>
         </div>
         <table id="reportsTable"></table>
     </div>
 
     <div id="qr" class="section">
-        <h2>QR Scanner</h2>
+        <h2>QR Codes</h2>
         <div class="section-actions">
-            <button class="primary" onclick="startScanner()">Start Scanner</button>
-            <button class="primary" onclick="stopScanner()">Stop Scanner</button>
+            <button class="primary" onclick="printQrCodes()">Print QR Codes</button>
         </div>
-        <video id="qrVideo" class="qr-video" playsinline></video>
+        <table id="qrTable"></table>
     </div>
 </div>
 
 <script src="js/shared/config.js?v=1"></script>
-<script src="js/shared/auth.js?v=1"></script>
-<script src="js/sections/users.js?v=1"></script>
-<script src="js/sections/classrooms.js?v=1"></script>
-<script src="js/sections/attendance.js?v=1"></script>
-<script src="js/sections/reports.js?v=1"></script>
-<script src="js/sections/qr.js?v=1"></script>
-<script src="js/app.js?v=1"></script>
+<script src="js/shared/auth.js?v=3"></script>
+<script src="js/sections/users.js?v=2"></script>
+<script src="js/sections/classrooms.js?v=4"></script>
+<script src="js/sections/reports.js?v=7"></script>
+<script src="js/sections/qr.js?v=3"></script>
+<script src="js/app.js?v=2"></script>
 
 </body>
 </html>

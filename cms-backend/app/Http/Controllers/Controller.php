@@ -3,11 +3,27 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
+use App\Models\AuditLog;
 use App\Models\Classroom;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 
 abstract class Controller
 {
+    protected function audit(string $action, ?Model $model = null, ?array $old = null, ?array $new = null): void
+    {
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'action' => $action,
+            'model' => $model ? class_basename($model) : null,
+            'model_id' => $model?->getKey(),
+            'old_values' => $old,
+            'new_values' => $new,
+            'ip_address' => request()->ip(),
+            'user_agent' => substr((string) request()->userAgent(), 0, 500),
+        ]);
+    }
+
     protected function ensureCanViewUser(User $user): void
     {
         $viewer = auth()->user();

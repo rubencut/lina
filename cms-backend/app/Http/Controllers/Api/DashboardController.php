@@ -47,9 +47,9 @@ class DashboardController extends Controller
     private function allowedPages(string $role): array
     {
         return match ($role) {
-            'super_admin' => ['dashboard', 'attendance', 'users', 'classrooms', 'reports', 'qr'],
-            'staff_teacher_supervisor' => ['dashboard', 'attendance', 'reports', 'qr'],
-            'student_employee_participant' => ['dashboard', 'reports'],
+            'super_admin' => ['dashboard', 'users', 'classrooms', 'reports', 'qr'],
+            'staff_teacher_supervisor' => ['classrooms', 'reports', 'qr'],
+            'student_employee_participant' => ['classrooms', 'reports'],
             default => [],
         };
     }

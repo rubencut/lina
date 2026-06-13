@@ -1,20 +1,15 @@
 let serverPages = [];
 const pageLabels = {
     dashboard: "Dashboard",
-    attendance: "Attendance",
     users: "Users",
     classrooms: "Classrooms",
     reports: "Reports",
-    qr: "QR Scanner"
+    qr: "QR Codes"
 };
 
 if (!token || isSessionExpired()) {
     clearSession();
     window.location.replace("index.html");
-}
-
-function allowedPages() {
-    return serverPages;
 }
 
 async function setupNavigation() {
@@ -24,7 +19,7 @@ async function setupNavigation() {
     const dashboard = await readJson(res);
     serverPages = dashboard.allowed_pages || [];
 
-    document.querySelector(".sidebar h2").innerText = `${displayStatus(dashboard.role)} Portal`;
+    document.querySelector(".app-header h1").innerText = `${displayStatus(dashboard.role)} Portal`;
 
     const nav = document.querySelector(".nav");
     nav.innerHTML = "";
@@ -43,8 +38,8 @@ async function setupNavigation() {
 }
 
 function showPage(page) {
-    if (!allowedPages().includes(page)) {
-        page = allowedPages()[0] || "dashboard";
+    if (!serverPages.includes(page)) {
+        page = serverPages[0] || "dashboard";
     }
 
     localStorage.setItem("activePage", page);
@@ -58,7 +53,8 @@ function showPage(page) {
     });
 
     if (page === "dashboard") loadDashboard();
-    if (page === "attendance") loadAttendance();
     if (page === "users") loadUsers();
     if (page === "classrooms") loadClassrooms();
+    if (page === "reports") loadReports();
+    if (page === "qr") loadQrCodes();
 }

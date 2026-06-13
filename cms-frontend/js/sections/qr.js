@@ -1,86 +1,114 @@
-let qrStream = null;
-let qrScanning = false;
-const qrCanvas = document.createElement("canvas");
-const qrContext = qrCanvas.getContext("2d", { willReadFrequently: true });
+async function loadQrCodes() {
+    const table = document.getElementById("qrTable");
+    if (!table) return;
 
-async function startScanner() {
-    try {
-        const video = document.getElementById("qrVideo");
-        qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-        video.srcObject = qrStream;
-        await video.play();
-        qrScanning = true;
-        scanQr();
-    } catch (err) {
-        Swal.fire("Camera Error", err.message, "error");
-    }
-}
+    const res = await fetch(`${API}/qr/users?per_page=100`, {
+        headers: authHeaders()
+    });
+    const data = await readJson(res);
+    const users = data.data || [];
 
-function stopScanner() {
-    if (qrStream) {
-        qrStream.getTracks().forEach(track => track.stop());
-        qrStream = null;
-    }
+    let html = `
+    <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Classroom</th>
+        <th>QR Code</th>
+        <th>QR Status</th>
+        <th>Action</th>
+    </tr>`;
 
-    document.getElementById("qrVideo").srcObject = null;
-    qrScanning = false;
-}
-
-function scanQr() {
-    if (!qrScanning) return;
-
-    const video = document.getElementById("qrVideo");
-    if (!video.videoWidth) {
-        requestAnimationFrame(scanQr);
-        return;
+    if (!users.length) {
+        html += `<tr><td colspan="6">No users available for QR codes.</td></tr>`;
     }
 
-    qrCanvas.width = video.videoWidth;
-    qrCanvas.height = video.videoHeight;
-    qrContext.drawImage(video, 0, 0, qrCanvas.width, qrCanvas.height);
-
-    const imageData = qrContext.getImageData(0, 0, qrCanvas.width, qrCanvas.height);
-    const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
-
-    if (!code) {
-        requestAnimationFrame(scanQr);
-        return;
-    }
-
-    stopScanner();
-    markQrAttendance(code.data);
-}
-
-async function markQrAttendance(qrCode) {
-    const { value: classroomId } = await Swal.fire({
-        title: "Classroom ID",
-        input: "number",
-        showCancelButton: true,
-        preConfirm: value => {
-            if (!value) return showFormError("Classroom ID is required");
-            return value;
-        }
+    users.forEach(user => {
+        html += `
+        <tr>
+            <td>${user.name}</td>
+            <td>${user.email ?? "-"}</td>
+            <td>${user.classroom?.name ?? "-"}</td>
+            <td>
+                ${user.qr_image
+                    ? `<button class="qr-thumb-button" onclick="viewQr(${user.id})" title="Open ${user.name} QR code">
+                        <img src="${user.qr_image}" alt="QR code for ${user.name}">
+                    </button>`
+                    : "-"
+                }
+            </td>
+            <td>${user.qr_code ? "Generated" : "Not generated"}</td>
+            <td>
+                <button class="action-btn edit" onclick="generateQr(${user.id})">${user.qr_code ? "View" : "Generate"}</button>
+                ${user.qr_code ? `<button class="action-btn edit" onclick="downloadQr(${user.id})">Download</button>` : ""}
+            </td>
+        </tr>`;
     });
 
-    if (!classroomId) return;
+    table.innerHTML = html;
+}
+
+async function generateQr(userId) {
+    try {
+        const res = await fetch(`${API}/qr/generate/${userId}`, {
+            method: "POST",
+            headers: authHeaders()
+        });
+        const data = await readJson(res);
+
+        await showQr(data);
+        loadQrCodes();
+    } catch (err) {
+        Swal.fire("QR Failed", apiError(err, "The QR code could not be generated."), "error");
+    }
+}
+
+async function viewQr(userId) {
+    try {
+        const data = await apiGet(`qr/get/${userId}`);
+        showQr(data);
+    } catch (err) {
+        Swal.fire("QR Failed", apiError(err, "The QR code could not be loaded."), "error");
+    }
+}
+
+function showQr(data) {
+    return Swal.fire({
+        title: data.user_name,
+        html: `
+            <div class="qr-card">
+                <img src="${data.qr_image}" alt="QR code for ${data.user_name}">
+                <p class="modal-muted">${data.qr_code}</p>
+            </div>
+        `,
+        showDenyButton: true,
+        confirmButtonText: "Close",
+        denyButtonText: "Download",
+        preDeny: () => {
+            downloadQr(data.user_id);
+            return false;
+        }
+    });
+}
+
+function downloadQr(userId) {
+    downloadFile(`qr/download/${userId}`, `qr-code-${userId}.png`);
+}
+
+async function printQrCodes() {
+    const win = window.open("about:blank", "_blank");
 
     try {
-        const res = await fetch(`${API}/qr/scan`, {
-            method: "POST",
-            headers: {
-                ...authHeaders(),
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                qr_code: qrCode,
-                classroom_id: classroomId
-            })
+        const res = await fetch(`${API}/qr/print-all`, {
+            headers: authHeaders()
         });
 
-        await readJson(res);
-        Swal.fire("Attendance Marked", "QR attendance was recorded.", "success");
-        loadDashboard();
+        if (!res.ok) throw await readJson(res);
+
+        win.document.write(await res.text());
+        win.document.close();
+        win.print();
     } catch (err) {
-        Swal.fire("Scan Failed", apiError(err, "The QR code could not be processed."), "error");
+        if (win) win.close();
+        Swal.fire("Print Failed", apiError(err, "The QR codes could not be printed."), "error");
     }
 }

@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Notification extends Model
 {
@@ -23,27 +23,13 @@ class Notification extends Model
         'updated_at' => 'datetime',
     ];
 
-    /**
-     * Get the user associated with this notification.
-     */
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Scope to get pending notifications.
-     */
     public function scopePending($query)
     {
         return $query->where('status', 'pending');
-    }
-
-    /**
-     * Scope to get sent notifications.
-     */
-    public function scopeSent($query)
-    {
-        return $query->where('status', 'sent');
     }
 }

@@ -115,19 +115,16 @@ select:focus {
     background: var(--danger);
 }
 
-.return,
-.success {
-    background: var(--success);
-}
-
-.primary,
-.view {
+.primary {
     background: var(--primary);
 }
 
 .logout {
-    width: 100%;
+    width: auto;
+    min-width: 96px;
+    flex: 0 0 auto;
     background: #374151;
+    margin-bottom: 0;
 }
 
 .logout:hover {
@@ -173,12 +170,137 @@ select:focus {
     font-size: 16px;
 }
 
-.empty-state {
-    padding: 18px;
-    background: var(--surface);
-    border: 1px solid var(--border);
+.dashboard-qr-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.dashboard-qr-card {
+    display: grid;
+    gap: 8px;
+    align-content: start;
+    padding: 10px;
+    border: 1px solid var(--border-soft);
     border-radius: 8px;
+    background: var(--surface-muted);
+}
+
+.dashboard-qr-card strong,
+.dashboard-qr-card span {
+    overflow-wrap: anywhere;
+}
+
+.dashboard-qr-card span {
     color: var(--muted);
+    font-size: 12px;
+}
+
+.qr-image-button,
+.qr-thumb-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: white;
+}
+
+.qr-image-button {
+    width: 100%;
+    aspect-ratio: 1;
+}
+
+.qr-image-button img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.qr-thumb-button {
+    width: 58px;
+    height: 58px;
+}
+
+.qr-thumb-button img {
+    width: 54px;
+    height: 54px;
+    object-fit: contain;
+}
+
+.qr-placeholder {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1;
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    background: white;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.modal-muted {
+    color: var(--muted);
+    margin-bottom: 12px;
+}
+
+.qr-card {
+    text-align: center;
+}
+
+.qr-card img {
+    width: 220px;
+    height: 220px;
+}
+
+.user-name-qr {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-name-qr img {
+    width: 42px;
+    height: 42px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: white;
+}
+
+.modal-list {
+    margin: 8px 0 18px 20px;
+    text-align: left;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 8px;
+    margin: 12px 0 18px;
+}
+
+.attendance-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.attendance-mark {
+    min-height: 30px;
+    padding: 5px 8px;
+    margin: 0;
+    font-size: 12px;
+}
+
+.attendance-mark.active {
+    background: var(--success);
+}
+
+.modal-table {
+    box-shadow: none;
 }
 
 @media (max-width: 900px) {

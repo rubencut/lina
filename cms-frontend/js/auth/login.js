@@ -41,28 +41,47 @@ authForm.onsubmit = async (event) => {
             password: password.value
         };
 
-        const res = await fetch(`${API}${url}`, {
-            method: "POST",
-            cache: "no-store",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-                "Cache-Control": "no-store"
-            },
-            body: JSON.stringify(payload)
-        });
-
-        const data = await readJson(res);
+        const data = await postAuth(url, payload);
 
         if (isLogin) {
             saveSession(data);
             window.location.replace("dashboard.html");
         } else {
+            if (data.verification_required) {
+                await promptVerificationCode(payload.email);
+            }
+
             toggle.click();
         }
     } catch (err) {
+        if (isLogin && err.verification_required) {
+            const verified = await promptVerificationCode(email.value.trim());
+
+            if (verified) {
+                try {
+                    const data = await postAuth("/login", {
+                        email: email.value.trim(),
+                        password: password.value
+                    });
+
+                    saveSession(data);
+                    window.location.replace("dashboard.html");
+                    return;
+                } catch (retryErr) {
+                    Swal.fire("Authentication Error", apiError(retryErr, "We could not sign you in after verification."), "error");
+                    return;
+                }
+            }
+
+            return;
+        }
+
         Swal.fire("Authentication Error", apiError(err, "We could not complete your request. Please review your details and try again."), "error");
     } finally {
         button.disabled = false;
     }
 };
+
+async function postAuth(path, payload) {
+    return postJson(path, payload);
+}

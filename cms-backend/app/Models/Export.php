@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Export extends Model
 {
@@ -24,9 +24,6 @@ class Export extends Model
 
     const UPDATED_AT = null;
 
-    /**
-     * Get the user who exported this.
-     */
     public function exportedBy()
     {
         return $this->belongsTo(User::class, 'exported_by');

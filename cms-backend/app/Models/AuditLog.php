@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class AuditLog extends Model
 {
@@ -28,27 +28,8 @@ class AuditLog extends Model
 
     const UPDATED_AT = null;
 
-    /**
-     * Get the user associated with this audit log.
-     */
     public function user()
     {
         return $this->belongsTo(User::class);
-    }
-
-    /**
-     * Scope to filter by action.
-     */
-    public function scopeByAction($query, $action)
-    {
-        return $query->where('action', $action);
-    }
-
-    /**
-     * Scope to filter by model.
-     */
-    public function scopeByModel($query, $model)
-    {
-        return $query->where('model', $model);
     }
 }
