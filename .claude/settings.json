@@ -9,7 +9,9 @@
       "Read(//c/Users/USER/herd/cms-frontend/**)",
       "Bash(php artisan *)",
       "Bash(cat config/cors.php)",
-      "Bash(grep -in \"APP_URL\\\\|FRONTEND\\\\|CORS\\\\|SANCTUM\\\\|ORIGIN\" .env .env.example)"
+      "Bash(grep -in \"APP_URL\\\\|FRONTEND\\\\|CORS\\\\|SANCTUM\\\\|ORIGIN\" .env .env.example)",
+      "Bash(php -l database/migrations/2026_06_13_000001_add_csv_to_exports_format.php)",
+      "Bash(php -l database/migrations/0001_01_01_000008_create_exports_table.php)"
     ]
   }
 }
