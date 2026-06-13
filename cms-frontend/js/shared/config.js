@@ -65,6 +65,17 @@ function displayStatus(status) {
         .replace(/\b\w/g, letter => letter.toUpperCase());
 }
 
+function statusBadge(status) {
+    const key = String(status ?? "")
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, "-");
+
+    if (!key) return "-";
+
+    return `<span class="badge badge-${key}">${displayStatus(status)}</span>`;
+}
+
 function formatDate(value) {
     if (!value) return "-";
 

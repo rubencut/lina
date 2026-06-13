@@ -42,7 +42,7 @@ function renderClassrooms() {
             <td>${classroom.id}</td>
             <td>${classroom.name}</td>
             <td>${classroom.teacher?.name ?? "-"}</td>
-            <td>${displayStatus(classroom.status)}</td>
+            <td>${statusBadge(classroom.status)}</td>
             <td>${classroom.description ?? "-"}</td>
             <td><button class="action-btn edit" onclick="viewClassroom(${classroom.id})">Open</button></td>
         </tr>`;
@@ -156,7 +156,7 @@ function studentRow(classroomId, student, record, canRecord) {
         <td>${student.name}</td>
         <td>${student.email}</td>
         <td>${studentQrCell(classroomId, student)}</td>
-        <td data-attendance-status>${record ? displayStatus(record.status) : "-"}</td>
+        <td data-attendance-status>${record ? statusBadge(record.status) : "-"}</td>
         <td data-attendance-time>${record?.time_in ?? "-"}</td>
         ${canRecord ? `<td><div class="attendance-buttons">${attendanceButtons(classroomId, student.id, record)}</div></td>` : ""}
     </tr>`;
@@ -213,7 +213,7 @@ function updateAttendanceRow(classroomId, studentId, record) {
     const row = document.querySelector(`tr[data-student-id="${studentId}"]`);
     if (!row) return;
 
-    row.querySelector("[data-attendance-status]").textContent = displayStatus(record.status);
+    row.querySelector("[data-attendance-status]").innerHTML = statusBadge(record.status);
     row.querySelector("[data-attendance-time]").textContent = record.time_in ?? "-";
     row.querySelector(".attendance-buttons").innerHTML = attendanceButtons(classroomId, studentId, record);
 }

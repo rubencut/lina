@@ -42,7 +42,7 @@ async function loadDashboard() {
             <td>${formatDate(row.date)}</td>
             <td>${row.user ?? "-"}</td>
             <td>${row.classroom ?? "-"}</td>
-            <td>${displayStatus(row.status)}</td>
+            <td>${statusBadge(row.status)}</td>
             <td>${row.time_in ?? "-"}</td>
         </tr>`;
     });
