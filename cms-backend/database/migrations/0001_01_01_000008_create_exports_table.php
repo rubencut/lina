@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('exported_by')->constrained('users')->restrictOnDelete();
             $table->string('type');
-            $table->enum('format', ['Excel', 'PDF']);
+            $table->enum('format', ['Excel', 'PDF', 'CSV']);
             $table->string('file_path')->nullable();
             $table->json('filters')->nullable();
             $table->timestamp('created_at')->useCurrent();
